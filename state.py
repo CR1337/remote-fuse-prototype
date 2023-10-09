@@ -4,7 +4,7 @@ import json
 
 class State:
 
-    DIP_PINS_IDS: list[int] = [0, 1, 2, 3, 4, 5, 6, 7]
+    DIP_PINS_IDS: list[int] = [8, 9, 10, 11, 12, 13, 14, 15]
     ADDRESS_BIT_INDICES: list[int] = [0, 1, 2, 3, 4, 5]
     FUSE_AMOUNT_BIT_INDICES: list[int] = [6, 7]
 

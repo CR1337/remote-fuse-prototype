@@ -6,7 +6,7 @@ from time import sleep
 
 class Fuse:
 
-    PIN_IDS: list[int] = [7, 8, 9, 10]
+    PIN_IDS: list[int] = [18, 19, 20, 21]
     DURATION: int = 100  # ms
 
     _index: int

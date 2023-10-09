@@ -3,7 +3,7 @@ from machine import Pin, Timer
 
 class Led:
 
-    STATUS_LED_PIN_ID: int = 11
+    STATUS_LED_PIN_ID: int = 0
     STATIC_PERIODS: list[int] = [100, 100]
     SHORT_BLINK_PERIODS: list[int] = [100, 900]
     LONG_BLINK_PERIODS: list[int] = [500, 500]
