@@ -66,7 +66,8 @@ class State:
         return json.dumps({
             'fuse_amount': self._fuse_amount,  # type: ignore
             'device_id': self._device_id,  # type: ignore
-            'fuse_states': self._fuse_states  # type: ignore
+            'fuse_states': self._fuse_states,  # type: ignore
+            'available_remote_device_ids': self.DEVICE_IDS  # type: ignore
         })
 
     def update_device_ids(self, device_ids: list[str]):
