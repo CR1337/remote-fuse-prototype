@@ -27,8 +27,10 @@ class Endpoints:
     def fire(cls, index: int) -> tuple[str, int]:
         if index < 0 or index >= len(fuses):
             return cls.not_found()
-        fuses[index].light()
-        return cls.ok()
+        if fuses[index].light():
+            return cls.ok()
+        else:
+            return cls.bad_request()
 
     @classmethod
     def testloop(cls) -> tuple[str, int]:
