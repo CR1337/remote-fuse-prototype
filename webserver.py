@@ -1,6 +1,7 @@
 import socket
 from endpoints import Endpoints
 from panic import panic
+from led import led
 
 
 class Webserver:
@@ -20,7 +21,7 @@ class Webserver:
         self._shutdown = False
 
     def run(self):
-        while True:
+        while not self._shutdown:
             try:
                 self._mainloop()
             except Exception as ex:
@@ -28,34 +29,42 @@ class Webserver:
                 self._current_connection.close()
                 print('connection closed')
                 panic()
+        led.off()
 
-    def _extract_fuse_index(self, parameter_string: str) -> int:
-        if parameter_string == "":
-            return -1
-        parameters = parameter_string.split("&")
-        for parameter in parameters:
-            if "=" not in parameter:
-                return -1
-            key, value = parameter.split("=")
-            if key == "index":
-                try:
-                    return int(value)
-                except ValueError:
-                    return -1
-        return -1
-
-    def _extract_device_ids(self, parameter_string) -> list[str] | None:
+    def _extract_parameters(
+        self, parameter_string: str
+    ) -> dict[str, str] | None:
         if parameter_string == "":
             return None
         parameters = parameter_string.split("&")
+        result = {}
         for parameter in parameters:
             if "=" not in parameter:
                 return None
             key, value = parameter.split("=")
-            if key == "device-ids":
-                if not value.startswith("[") or not value.endswith("]"):
-                    return None
-                return value[1:-1].split(",")
+            result[key] = value
+        return result
+
+    def _extract_fuse_index(self, parameter_string: str) -> int | None:
+        parameters = self._extract_parameters(parameter_string)
+        if parameters is None:
+            return None
+        if 'index' in parameters:  # type: ignore
+            try:
+                return int(parameters['index'])  # type: ignore
+            except ValueError:
+                return None
+        return None
+
+    def _extract_device_ids(self, parameter_string) -> list[str] | None:
+        parameters = self._extract_parameters(parameter_string)
+        if parameters is None:
+            return None
+        if 'device-ids' in parameters:  # type: ignore
+            value = parameters['device-ids']
+            if not value.startswith("[") or not value.endswith("]"):
+                return None
+            return value[1:-1].split(",")
         return None
 
     def _mainloop(self):
@@ -63,30 +72,31 @@ class Webserver:
         request = str(self._current_connection.recv(1024))
         url = request.split(" ")[1]
         parameter_string = url.split("?")[-1] if "?" in url else ""
+        location = url.split("?")[0] if "?" in url else url
         content_type = "application/json"
 
-        if url == "/":
+        if location == "/":
             content, status = Endpoints.index()
             content_type = "text/html"
-        elif url == "/discover":
+        elif location == "/discover":
             content, status = Endpoints.discover()
-        elif url == "/fire":
+        elif location == "/fire":
             fuse_index = self._extract_fuse_index(parameter_string)
-            if fuse_index == -1:
+            if fuse_index is None:
                 content, status = Endpoints.bad_request()
             else:
                 content, status = Endpoints.fire(fuse_index)
-        elif url == "/testloop":
+        elif location == "/testloop":
             content, status = Endpoints.testloop()
-        elif url == "/state":
+        elif location == "/state":
             content, status = Endpoints.state()
-        elif url == "update-device-ids":
+        elif location == "update-device-ids":
             device_ids = self._extract_device_ids(parameter_string)
             if device_ids is None:
                 content, status = Endpoints.bad_request()
             else:
                 content, status = Endpoints.update_device_ids(device_ids)
-        elif url == "shutdown":
+        elif location == "shutdown":
             self._shutdown = True
             content, status = Endpoints.ok()
         else:
